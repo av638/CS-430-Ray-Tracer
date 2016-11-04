@@ -282,6 +282,60 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.sphere.radius = nextNumber(json);
 				}
 
+			} else if(strcmp(name, "reflectivity") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+                // If it is the reflectivity then lets place it in the sphere structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.sphere.reflectivity = nextNumber(json);
+				}
+
+			} else if(strcmp(name, "refractivity") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+                // If it is the refractivity then lets place it in the sphere structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.sphere.refractivity = nextNumber(json);
+				}
+
+			} else if(strcmp(name, "ior") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+                // If it is the index of refraction then lets place it in the sphere structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.sphere.ior = nextNumber(json);
+				}
+
 			} else if(strcmp(name, "radial-a2") == 0) {
 
 				skipWhiteSpace(json);
