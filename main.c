@@ -377,12 +377,13 @@ void trace(Object objects[], double* Ro, double* Rd, int numObjects, int currDep
                         trace(objects, refractO, refractD, numObjects, currDepth+1, best_i, refraction);
 
                     }
-                        createdColor[0] += reflection[0] * fresneleffect + refraction[0] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[0];
-                        createdColor[1] += reflection[1] * fresneleffect + refraction[1] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[1];;
-                        createdColor[2] += reflection[2] * fresneleffect + refraction[2] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[2];;
+                        createdColor[0] += reflection[0] * fresneleffect + refraction[0] * (1 - fresneleffect) * refract;
+                        createdColor[1] += reflection[1] * fresneleffect + refraction[1] * (1 - fresneleffect) * refract;
+                        createdColor[2] += reflection[2] * fresneleffect + refraction[2] * (1 - fresneleffect) * refract;
 
                 }
                 // if there is no reflection, refraction, or ior
+                // or if we have hit the max depth
                 else
                 {
 
@@ -463,82 +464,79 @@ void trace(Object objects[], double* Ro, double* Rd, int numObjects, int currDep
                 //put stuff into buffer here
             }
             else if(strcmp(objects[best_i].type, "plane") == 0)
-            {   //printf("plane color");
-                //printf("hi there!");
+            {
 
-                createdColor[0] = 0;//ambientColor[0];
-                createdColor[1] = 0;//ambientColor[1];
-                createdColor[2] = 0;//ambientColor[2];
-                // In order to find a shadow
-                for (l = 0; l < numObjects; l++)
-                {
-                    // Look for a light to see if that object has a shadow casted on it by a light
-                    if(strcmp(objects[l].type, "light") == 0)
-                    {   // calc new ray origin and direction
-                        //printf("hello");
-                        double temp[3];
-                        double Ron[3];
-                        double Rdn[3];
-                        v3_scale(Rd, best_t, temp);
-                        v3_add(temp, Ro, Ron);
-                        v3_subtract(objects[l].properties.light.position, Ron, Rdn);
-
-                        double distanceTLight = v3_len(Rdn);
-                        normalize(Rdn);
-
-                        double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
-                        // there is an object in the way so shade in
-                        if(otherObjIntersect != -1)
-                        {
-                            continue;
-                        }
-                        // otherwise there is no object in between us and the light source
-                        else
-                        {
+                    // In order to find a shadow
+                    for (l = 0; l < numObjects; l++)
+                    {
+                        // Look for a light to see if that object has a shadow casted on it by a light
+                        if(strcmp(objects[l].type, "light") == 0)
+                        {   // calc new ray origin and direction
                             //printf("hello");
-                            //double planePos[3] = {objects[best_i].properties.plane.position[0],objects[best_i].properties.plane.position[1],objects[best_i].properties.plane.position[2]};
+                            double temp[3];
+                            double Ron[3];
+                            double Rdn[3];
+                            v3_scale(Rd, best_t, temp);
+                            v3_add(temp, Ro, Ron);
+                            v3_subtract(objects[l].properties.light.position, Ron, Rdn);
 
-                            double n[3] = {objects[best_i].properties.plane.normal[0],objects[best_i].properties.plane.normal[1],objects[best_i].properties.plane.normal[2]}; //objects[best_i]->normal;
-                            //n = v3_subtract(Ron, objects[best_i].properties.sphere.position, n);
-                            normalize(n);
-                            double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
-                            normalize(lVector);
-                            double lReflection[3];
-                            double V[3] = {-Rd[0], -Rd[1], -Rd[2]};
-                            v3_reflect(lVector, n, lReflection); // in the book
-                            normalize(lReflection);
-                            double diffuseColor[3];
-                            double specularColor[3];
-                            double diffPlusSpec[3];
+                            double distanceTLight = v3_len(Rdn);
+                            normalize(Rdn);
 
-                            double lightRayToClosestObj[3];
-                            //printf("problem is here\n");
+                            double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
+                            // there is an object in the way so shade in
+                            if(otherObjIntersect != -1)
+                            {
+                                continue;
+                            }
+                            // otherwise there is no object in between us and the light source
+                            else
+                            {
+                                //printf("hello");
+                                //double planePos[3] = {objects[best_i].properties.plane.position[0],objects[best_i].properties.plane.position[1],objects[best_i].properties.plane.position[2]};
 
-                            //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
-                            calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.plane.diffuseColor, diffuseColor);
-                            calculateSpecular(20, lVector, V, n, lReflection, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
+                                double n[3] = {objects[best_i].properties.plane.normal[0],objects[best_i].properties.plane.normal[1],objects[best_i].properties.plane.normal[2]}; //objects[best_i]->normal;
+                                //n = v3_subtract(Ron, objects[best_i].properties.sphere.position, n);
+                                normalize(n);
+                                double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
+                                normalize(lVector);
+                                double lReflection[3];
+                                double V[3] = {-Rd[0], -Rd[1], -Rd[2]};
+                                v3_reflect(lVector, n, lReflection); // in the book
+                                normalize(lReflection);
+                                double diffuseColor[3];
+                                double specularColor[3];
+                                double diffPlusSpec[3];
 
-                            v3_add(diffuseColor, specularColor, diffPlusSpec);
+                                double lightRayToClosestObj[3];
+                                //printf("problem is here\n");
 
-                            v3_scale(Rdn, -1, lightRayToClosestObj);
+                                //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
+                                calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.plane.diffuseColor, diffuseColor);
+                                calculateSpecular(20, lVector, V, n, lReflection, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
 
-                            double fang = calculateAngularAt(objects, Ron, numObjects, l);
-                            double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
+                                v3_add(diffuseColor, specularColor, diffPlusSpec);
 
-                            //printf("Color is: %lf", diffuseColor[1]);
-                            //printf("Color is: %lf", diffPlusSpec[2]);
+                                v3_scale(Rdn, -1, lightRayToClosestObj);
 
-                            // still need frad * rest
-                            createdColor[0] += frad * fang * diffPlusSpec[0];
-                            createdColor[1] += frad * fang * diffPlusSpec[1];
-                            createdColor[2] += frad * fang * diffPlusSpec[2];
+                                double fang = calculateAngularAt(objects, Ron, numObjects, l);
+                                double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
 
+                                //printf("Color is: %lf", diffuseColor[1]);
+                                //printf("Color is: %lf", diffPlusSpec[2]);
+
+                                // still need frad * rest
+                                createdColor[0] += frad * fang * diffPlusSpec[0];
+                                createdColor[1] += frad * fang * diffPlusSpec[1];
+                                createdColor[2] += frad * fang * diffPlusSpec[2];
+
+
+                            }
 
                         }
 
                     }
 
-                }
                // here is where we would normally put stuff in the buffer
             }
 
@@ -705,9 +703,9 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                                 trace(objects, refractO, refractD, numObjects, 1, best_i, refraction);
 
                             }
-                                color[0] += reflection[0] * fresneleffect + refraction[0] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[0];
-                                color[1] += reflection[1] * fresneleffect + refraction[1] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[1];;
-                                color[2] += reflection[2] * fresneleffect + refraction[2] * (1 - fresneleffect) * refract * objects[best_i].properties.sphere.diffuseColor[2];;
+                                color[0] += reflection[0] * fresneleffect + refraction[0] * (1 - fresneleffect) * refract;
+                                color[1] += reflection[1] * fresneleffect + refraction[1] * (1 - fresneleffect) * refract;
+                                color[2] += reflection[2] * fresneleffect + refraction[2] * (1 - fresneleffect) * refract;
 
                         }
                         // if there is no reflection, refraction, or ior
@@ -798,10 +796,76 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                     {   //printf("plane color");
                         //printf("hi there!");
 
-                        color[0] = 0;//ambientColor[0];
-                        color[1] = 0;//ambientColor[1];
-                        color[2] = 0;//ambientColor[2];
+                        double reflect = objects[best_i].properties.plane.reflectivity;
+                        double refract = objects[best_i].properties.plane.refractivity;
+                        double indexOfRefraction = objects[best_i].properties.plane.ior;
 
+                        // if there is a refraction or reflection or ior then use them
+                        // calculate reflection and refraction color here
+                        if(reflect >= 0 || refract >= 0 || indexOfRefraction >=0)
+                        {
+                            double temp[3];
+                            double Ron[3];//phit
+                            double Rdn[3];//nhit
+                            v3_scale(Rd, best_t, temp);
+                            v3_add(temp, Ro, Ron);
+                            v3_subtract(Ron, objects[best_i].properties.plane.position, Rdn);
+
+                            normalize(Rdn);
+                            int inside = 0;// used to check if we are inside the object
+                            double bias = 0.0001;
+                            if (v3_dot(Rd,Rdn) > 0)
+                            {
+                                v3_scale(Rdn, -1, Rdn);
+                                inside = 1;
+                            }
+
+                            double rayDir[3] = {-Rd[0], -Rd[1], -Rd[2]}; // inverse of the ray direction
+                            double facingratio = v3_dot(rayDir,Rdn);
+                            double fresneleffect = freselCalc(pow(1 - facingratio, 3), 1, 0.1);
+                            // Compute the reflection direction
+                            double refldir[3];
+                            v3_reflect(Rd, Rdn, refldir);
+                            normalize(refldir);
+                            double reflection[3];
+
+                            double nextRayO[3];
+                            v3_scale(Rdn, bias, nextRayO);
+                            v3_add(Ron, nextRayO, nextRayO);
+
+                            trace(objects, nextRayO, refldir, numObjects, 1, best_i, reflection);
+
+                            double refraction[3] = {0,0,0};
+                            //If the object for sure has refraction/transparent
+                            if(refract > 0)
+                            {
+                                double eta = 0;
+                                if(inside) eta = indexOfRefraction;
+                                else eta = 1/indexOfRefraction;
+                                double inRdn[3] = {-Rdn[0], -Rdn[1], -Rdn[2]};
+                                double cosi = v3_dot(inRdn, Rd);
+                                double k = 1 - pow(eta, eta) * (1 - cosi * cosi);
+                                double mathTemp = eta * cosi - sqrt(k);
+                                double refractD[3];
+                                double raydTemp[3];
+                                v3_scale(Rdn, mathTemp, raydTemp);
+                                v3_scale(Rd, eta, refractD);
+                                v3_add(refractD, raydTemp, refractD);
+                                double refractO[3];
+                                v3_scale(Rdn, bias, refractO);
+                                v3_subtract(Ron, refractO, refractO);
+
+
+                                normalize(refractD);
+
+                                trace(objects, refractO, refractD, numObjects, 1, best_i, refraction);
+
+                            }
+                                color[0] += reflection[0] * fresneleffect + refraction[0] * (1 - fresneleffect) * refract;
+                                color[1] += reflection[1] * fresneleffect + refraction[1] * (1 - fresneleffect) * refract;
+                                color[2] += reflection[2] * fresneleffect + refraction[2] * (1 - fresneleffect) * refract;
+
+                        }
                         // In order to find a shadow
                         for (l = 0; l < numObjects; l++)
                         {
