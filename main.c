@@ -634,7 +634,10 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                 // place the color of the current intersection into the image buffer
 				if(best_t > 0 && best_t != INFINITY && best_t != -1)
-                {
+                {   color[0] = 0;
+                    color[1] = 0;
+                    color[2] = 0;
+
                     if(strcmp(objects[best_i].type, "sphere") == 0)
                     {  // printf("hello there!");
                         double reflect = objects[best_i].properties.sphere.reflectivity;
@@ -708,94 +711,87 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                         }
                         // if there is no reflection, refraction, or ior
-                        else
+                        // In order to find a shadow
+                        for (l = 0; l < numObjects; l++)
                         {
-                            color[0] = 0;//ambientColor[0];
-                            color[1] = 0;//ambientColor[1];
-                            color[2] = 0;//ambientColor[2];
-                            // In order to find a shadow
-                            for (l = 0; l < numObjects; l++)
-                            {
-                                // Look for a light to see if that object has a shadow casted on it by a light
-                                if(strcmp(objects[l].type, "light") == 0)
-                                {   // calc new ray origin and direction
-                                    double temp[3];
-                                    double Ron[3];
-                                    double Rdn[3];
-                                    v3_scale(Rd, best_t, temp);
-                                    v3_add(temp, Ro, Ron);
-                                    v3_subtract(objects[l].properties.light.position, Ron, Rdn);
+                            // Look for a light to see if that object has a shadow casted on it by a light
+                            if(strcmp(objects[l].type, "light") == 0)
+                            {   // calc new ray origin and direction
+                                double temp[3];
+                                double Ron[3];
+                                double Rdn[3];
+                                v3_scale(Rd, best_t, temp);
+                                v3_add(temp, Ro, Ron);
+                                v3_subtract(objects[l].properties.light.position, Ron, Rdn);
 
-                                    double distanceTLight = v3_len(Rdn);
-                                    normalize(Rdn);
-                                    //printf("%lf", distanceTLight);
-                                    //exit(0);
-                                    double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
-                                    // there is an object in the way so shade in
-                                    if(otherObjIntersect != -1)
-                                    {   //printf("hi there");
+                                double distanceTLight = v3_len(Rdn);
+                                normalize(Rdn);
+                                //printf("%lf", distanceTLight);
+                                //exit(0);
+                                double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
+                                // there is an object in the way so shade in
+                                if(otherObjIntersect != -1)
+                                {   //printf("hi there");
 
-                                        continue;
-                                    }
-                                    // otherwise there is no object in between us and the light source
-                                    else
-                                    {
-                                        //printf("hello");
-                                        double spherePos[3] = {objects[best_i].properties.sphere.position[0],objects[best_i].properties.sphere.position[1],objects[best_i].properties.sphere.position[2]};
+                                    continue;
+                                }
+                                // otherwise there is no object in between us and the light source
+                                else
+                                {
+                                    //printf("hello");
+                                    double spherePos[3] = {objects[best_i].properties.sphere.position[0],objects[best_i].properties.sphere.position[1],objects[best_i].properties.sphere.position[2]};
 
-                                        double n[3] = {Ron[0] - spherePos[0], Ron[1]-spherePos[1], Ron[2]-spherePos[2]}; //objects[best_i]->normal;
-                                        //n = v3_subtract(Ron, objects[best_i].properties.sphere.position, n);
+                                    double n[3] = {Ron[0] - spherePos[0], Ron[1]-spherePos[1], Ron[2]-spherePos[2]}; //objects[best_i]->normal;
+                                    //n = v3_subtract(Ron, objects[best_i].properties.sphere.position, n);
 
-                                        normalize(n);
-                                        double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
-                                        normalize(lVector);
-                                        //double distanceVector[3] = {Ron[0] - objects[best_i].properties.light.position[0], Ron[1] - objects[best_i].properties.light.position[1],Ron[2] - objects[best_i].properties.light.position[2]};
+                                    normalize(n);
+                                    double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
+                                    normalize(lVector);
+                                    //double distanceVector[3] = {Ron[0] - objects[best_i].properties.light.position[0], Ron[1] - objects[best_i].properties.light.position[1],Ron[2] - objects[best_i].properties.light.position[2]};
 
-                                        double lReflection[3];
-                                        normalize(lReflection);
-                                        double V[3] = {Rd[0], Rd[1], Rd[2]}; // original ray direction
-                                        //normalize(V);
-                                        double diffuseColor[3];
-                                        double specularColor[3];
-                                        double diffPlusSpec[3];
-                                        double lightRayToClosestObj[3];
-                                        //printf("problem is here\n");
-                                        v3_reflect(lVector, n, lReflection); // in the book
+                                    double lReflection[3];
+                                    normalize(lReflection);
+                                    double V[3] = {Rd[0], Rd[1], Rd[2]}; // original ray direction
+                                    //normalize(V);
+                                    double diffuseColor[3];
+                                    double specularColor[3];
+                                    double diffPlusSpec[3];
+                                    double lightRayToClosestObj[3];
+                                    //printf("problem is here\n");
+                                    v3_reflect(lVector, n, lReflection); // in the book
 
-                                        //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
-                                        calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.sphere.diffuseColor, diffuseColor);
-                                        calculateSpecular(20, lVector, lReflection, n, V, objects[best_i].properties.sphere.specularColor, objects[l].properties.light.color, specularColor);
+                                    //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
+                                    calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.sphere.diffuseColor, diffuseColor);
+                                    calculateSpecular(20, lVector, lReflection, n, V, objects[best_i].properties.sphere.specularColor, objects[l].properties.light.color, specularColor);
 
-                                        v3_add(diffuseColor, specularColor, diffPlusSpec);
+                                    v3_add(diffuseColor, specularColor, diffPlusSpec);
 
-                                        v3_scale(Rdn, -1, lightRayToClosestObj);
+                                    v3_scale(Rdn, -1, lightRayToClosestObj);
 
-                                        double fang = calculateAngularAt(objects, Ron, numObjects, l);
-                                        double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
-                                        //printf("Color is: %lf", diffuseColor[1]);
-                                        //printf("Color is: %lf", diffPlusSpec[2]);
+                                    double fang = calculateAngularAt(objects, Ron, numObjects, l);
+                                    double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
+                                    //printf("Color is: %lf", diffuseColor[1]);
+                                    //printf("Color is: %lf", diffPlusSpec[2]);
 
-                                        // still need frad * rest
-                                        color[0] += frad * fang * diffPlusSpec[0];
-                                        color[1] += frad * fang * diffPlusSpec[1];
-                                        color[2] += frad * fang * diffPlusSpec[2];
+                                    // still need frad * rest
+                                    color[0] += frad * fang * diffPlusSpec[0];
+                                    color[1] += frad * fang * diffPlusSpec[1];
+                                    color[2] += frad * fang * diffPlusSpec[2];
 
-
-                                    }
 
                                 }
 
                             }
+
                         }
+
                         //printf("Hey we are changing the color!");
                         //1exit(0);
                         // Change object color for simply color
                         buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
                         buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
                         buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
-                        /*buffer->image[y*3 * buffer->width + x*3].r = 1 *255;
-                        buffer->image[y*3 * buffer->width + x*3+1].g = 0 *255;
-                        buffer->image[y*3 * buffer->width + x*3+2].b = 0 *255;*/
+
                         //printf("hi");
                     }
                     else if(strcmp(objects[best_i].type, "plane") == 0)
@@ -805,6 +801,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                         color[0] = 0;//ambientColor[0];
                         color[1] = 0;//ambientColor[1];
                         color[2] = 0;//ambientColor[2];
+
                         // In order to find a shadow
                         for (l = 0; l < numObjects; l++)
                         {
@@ -878,9 +875,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                         buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
                         buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
                         buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
-                       /* buffer->image[y*3 * buffer->width + x*3].r = 0 *255;
-                        buffer->image[y*3 * buffer->width + x*3+1].g = 1 *255;
-                        buffer->image[y*3 * buffer->width + x*3+2].b = 0 *255;*/
+
                     }
 
 				}

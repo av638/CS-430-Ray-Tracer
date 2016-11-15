@@ -297,7 +297,12 @@ int readScene(FILE *json, Object objects[])
 				else
                 {
 					skipWhiteSpace(json);
-					objects[numObjects].properties.sphere.reflectivity = nextNumber(json);
+                    if(strcmp(objects[numObjects].type, "plane") == 0)
+                        objects[numObjects].properties.plane.reflectivity  = nextNumber(json);
+                    else if(strcmp(objects[numObjects].type, "sphere") == 0)
+                        objects[numObjects].properties.sphere.reflectivity  = nextNumber(json);
+
+
 				}
 
 			} else if(strcmp(name, "refractivity") == 0) {
@@ -315,8 +320,10 @@ int readScene(FILE *json, Object objects[])
 				else
                 {
 					skipWhiteSpace(json);
-					objects[numObjects].properties.sphere.refractivity = nextNumber(json);
-				}
+                    if(strcmp(objects[numObjects].type, "plane") == 0)
+                        objects[numObjects].properties.plane.refractivity  = nextNumber(json);
+                    else if(strcmp(objects[numObjects].type, "sphere") == 0)
+                        objects[numObjects].properties.sphere.refractivity  = nextNumber(json);				}
 
 			} else if(strcmp(name, "ior") == 0) {
 
@@ -333,8 +340,10 @@ int readScene(FILE *json, Object objects[])
 				else
                 {
 					skipWhiteSpace(json);
-					objects[numObjects].properties.sphere.ior = nextNumber(json);
-				}
+                    if(strcmp(objects[numObjects].type, "plane") == 0)
+                        objects[numObjects].properties.plane.ior  = nextNumber(json);
+                    else if(strcmp(objects[numObjects].type, "sphere") == 0)
+                        objects[numObjects].properties.sphere.ior  = nextNumber(json);				}
 
 			} else if(strcmp(name, "radial-a2") == 0) {
 

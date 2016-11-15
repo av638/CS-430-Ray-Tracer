@@ -6,6 +6,8 @@
 #ifndef JSONOBJECTS_H_INCLUDED
 #define JSONOBJECTS_H_INCLUDED
 
+
+
 typedef struct Light
 {
     double color[3];
@@ -30,7 +32,9 @@ typedef struct Plane
 	double specularColor[3];
     double position[3];
 	double normal[3];
-
+    double reflectivity;
+    double refractivity;
+    double ior; // index of refraction
 } Plane;
 
 
